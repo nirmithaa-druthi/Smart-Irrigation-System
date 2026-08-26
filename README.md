@@ -1,0 +1,1 @@
+# AI-Powered-Smart-Irrigation-System-for-Predictive-Water-Management-and-Crop-Optimization-AUG-2026
