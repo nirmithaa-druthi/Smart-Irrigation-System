@@ -1,4 +1,32 @@
+# Environment and secrets
 .env
+
+# Python virtual environments
 .venv/
+.venv_lstm/
+.venv-lstm/
+
+# Python cache
 __pycache__/
 *.pyc
+
+# MLflow local tracking
+mlflow.db
+mlruns/
+
+# Generated Python cache anywhere in project
+**/__pycache__/
+**/*.pyc
+# Generated ML datasets
+ml/ml_ready_dataset_multicrop.csv
+ml/ml_ready_dataset_multicrop_cleaned.csv
+ml/ml_ready_dataset.csv
+
+# Generated LSTM training data
+ml/lstm_data/
+
+# Python cache
+**/__pycache__/
+**/*.pyc
+# Old duplicate ML scripts
+python/ml/

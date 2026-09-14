@@ -1,0 +1,64 @@
+{
+    "model_name": "Random Forest Multi-Crop",
+    "model_version": "2.0",
+    "model_type": "RandomForestRegressor",
+    "dataset": "ml_ready_dataset_multicrop.csv",
+    "target": "water_quantity_liters",
+    "crop_count": 22,
+    "crop_types": [
+        "apple",
+        "banana",
+        "blackgram",
+        "chickpea",
+        "coconut",
+        "coffee",
+        "cotton",
+        "grapes",
+        "jute",
+        "kidneybeans",
+        "lentil",
+        "maize",
+        "mango",
+        "mothbeans",
+        "mungbean",
+        "muskmelon",
+        "orange",
+        "papaya",
+        "pigeonpeas",
+        "pomegranate",
+        "rice",
+        "watermelon"
+    ],
+    "feature_count": 24,
+    "training_records": 33910,
+    "validation_records": 7267,
+    "test_records": 7267,
+    "selected_model": "Random Forest",
+    "selected_hyperparameters": {
+        "n_estimators": 150,
+        "max_depth": 10,
+        "min_samples_split": 2
+    },
+    "validation_metrics": {
+        "MAE": 0.024208063850306598,
+        "RMSE": 0.44136071918159364,
+        "R2": 0.9982676072559501
+    },
+    "test_metrics": {
+        "MAE": 2.8123001840236523e-14,
+        "RMSE": 4.329192867198195e-14,
+        "R2": 1.0
+    },
+    "random_forest_best_validation": {
+        "MAE": 0.024208063850306598,
+        "RMSE": 0.44136071918159364,
+        "R2": 0.9982676072559501
+    },
+    "gradient_boosting_best_validation": {
+        "MAE": 0.04419521511421592,
+        "RMSE": 0.4422322768217687,
+        "R2": 0.9982607585680138
+    },
+    "status": "Selected final multi-crop model",
+    "target_note": "water_quantity_liters is a rule-generated/synthetic target derived from sensor, weather, crop reference and growth-stage conditions. It is not measured irrigation data."
+}

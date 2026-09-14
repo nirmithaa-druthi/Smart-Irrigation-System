@@ -1,0 +1,54 @@
+{
+    "model_name": "Gradient Boosting Multi-Crop",
+    "model_version": "2.0",
+    "model_type": "GradientBoostingRegressor",
+    "dataset": "ml_ready_dataset_multicrop.csv",
+    "target": "water_quantity_liters",
+    "crop_count": 22,
+    "crop_types": [
+        "apple",
+        "banana",
+        "blackgram",
+        "chickpea",
+        "coconut",
+        "coffee",
+        "cotton",
+        "grapes",
+        "jute",
+        "kidneybeans",
+        "lentil",
+        "maize",
+        "mango",
+        "mothbeans",
+        "mungbean",
+        "muskmelon",
+        "orange",
+        "papaya",
+        "pigeonpeas",
+        "pomegranate",
+        "rice",
+        "watermelon"
+    ],
+    "feature_count": 24,
+    "training_records": 33910,
+    "validation_records": 7267,
+    "test_records": 7267,
+    "hyperparameters": {
+        "n_estimators": 150,
+        "learning_rate": 0.1,
+        "max_depth": 3,
+        "random_state": 42
+    },
+    "validation_metrics": {
+        "MAE": 0.04419521511421592,
+        "RMSE": 0.4422322768217687,
+        "R2": 0.9982607585680138
+    },
+    "test_metrics": {
+        "MAE": 0.020838384209861907,
+        "RMSE": 0.02757133429665995,
+        "R2": 0.999994129263637
+    },
+    "status": "Multi-crop model trained",
+    "target_note": "water_quantity_liters is a rule-generated/synthetic target derived from sensor, weather, crop reference and growth-stage conditions. It is not measured irrigation data."
+}

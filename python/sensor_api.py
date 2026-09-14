@@ -20,6 +20,9 @@ class SensorReading(BaseModel):
 @app.post("/sensor-data")
 def add_sensor_data(reading: SensorReading):
 
+    conn = None
+    cursor = None
+
     try:
         conn = psycopg2.connect(
             host="localhost",
@@ -31,7 +34,7 @@ def add_sensor_data(reading: SensorReading):
 
         cursor = conn.cursor()
 
-        # Check that the sensor is registered
+        # Check that the sensor is registered for the field
         cursor.execute(
             """
             SELECT 1
@@ -70,6 +73,7 @@ def add_sensor_data(reading: SensorReading):
                 detail="Duplicate sensor reading."
             )
 
+        # Insert valid sensor reading
         cursor.execute(
             """
             INSERT INTO sensor_data
@@ -86,9 +90,6 @@ def add_sensor_data(reading: SensorReading):
 
         conn.commit()
 
-        cursor.close()
-        conn.close()
-
         return {
             "message": "Sensor data stored successfully",
             "sensor_id": reading.sensor_id,
@@ -98,16 +99,35 @@ def add_sensor_data(reading: SensorReading):
         }
 
     except HTTPException:
+        if conn:
+            conn.rollback()
         raise
 
     except psycopg2.Error as error:
+        if conn:
+            conn.rollback()
+
+        print("DATABASE ERROR:", error)
+
         raise HTTPException(
             status_code=500,
-            detail="Database error while storing sensor data."
+            detail=str(error)
         )
 
     except Exception as error:
+        if conn:
+            conn.rollback()
+
+        print("UNEXPECTED ERROR:", error)
+
         raise HTTPException(
             status_code=500,
             detail="Unexpected error occurred."
         )
+
+    finally:
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()

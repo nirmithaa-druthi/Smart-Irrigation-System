@@ -1,0 +1,57 @@
+{
+    "model_name": "LSTM",
+    "model_type": "Long Short-Term Memory Neural Network",
+    "sequence_length": 6,
+    "feature_count": 24,
+    "features": [
+        "soil_moisture",
+        "soil_moisture_change",
+        "soil_moisture_rolling_mean",
+        "soil_moisture_stress",
+        "hour",
+        "day_of_week",
+        "day_of_month",
+        "temperature",
+        "humidity",
+        "rainfall",
+        "rain_probability",
+        "growth_stage_multiplier",
+        "crop_soil_moisture_mean",
+        "crop_temperature_mean",
+        "crop_humidity_mean",
+        "crop_rainfall_mean",
+        "crop_irrigation_frequency_mean",
+        "crop_density_mean",
+        "crop_pest_pressure_mean",
+        "crop_fertilizer_usage_mean",
+        "crop_frost_risk_mean",
+        "crop_water_efficiency_mean",
+        "crop_water_factor",
+        "previous_water_usage_liters"
+    ],
+    "target": "water_quantity_liters",
+    "dataset_records": 48444,
+    "sequence_records": 48312,
+    "training_records": 33818,
+    "validation_records": 7247,
+    "test_records": 7247,
+    "epochs_requested": 50,
+    "epochs_completed": 50,
+    "training_metrics": {
+        "MAE": 0.5901654362678528,
+        "RMSE": 0.9826632254424673,
+        "R2": 0.9923003315925598
+    },
+    "validation_metrics": {
+        "MAE": 0.8459697365760803,
+        "RMSE": 1.4963954691017078,
+        "R2": 0.9836419820785522
+    },
+    "test_metrics": {
+        "MAE": 0.6577153205871582,
+        "RMSE": 1.0974000244833066,
+        "R2": 0.9900546669960022
+    },
+    "status": "Completed",
+    "note": "The LSTM was trained using chronological time-series sequences. The water quantity target is rule-generated/simulated in the Milestone 2 dataset and does not represent measured real-world irrigation volume."
+}
