@@ -3,7 +3,12 @@ Multi-Crop Model Hyperparameter Tuning
 AI-Powered Smart Irrigation System
 
 Compares several Random Forest and Gradient Boosting
-configurations using the validation set.
+configurations using a timestamp-grouped chronological
+validation strategy.
+
+All crop records belonging to the same timestamp are kept
+in the same split to prevent timestamp overlap between
+training, validation and test sets.
 
 The final model is selected using the lowest validation MAE.
 
@@ -21,6 +26,7 @@ from sklearn.ensemble import (
     RandomForestRegressor,
     GradientBoostingRegressor,
 )
+
 from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
@@ -29,7 +35,7 @@ from sklearn.metrics import (
 
 
 # ============================================================
-# PATHS
+# 1. PATHS
 # ============================================================
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -63,7 +69,7 @@ FINAL_METADATA_PATH = (
 
 
 # ============================================================
-# FEATURES
+# 2. FEATURES
 # ============================================================
 
 FEATURES = [
@@ -103,14 +109,10 @@ TARGET = "water_quantity_liters"
 
 
 # ============================================================
-# METRICS
+# 3. METRICS
 # ============================================================
 
-def calculate_metrics(
-    model,
-    X,
-    y,
-):
+def calculate_metrics(model, X, y):
 
     predictions = model.predict(X)
 
@@ -137,7 +139,7 @@ def calculate_metrics(
 
 
 # ============================================================
-# LOAD DATASET
+# 4. LOAD DATASET
 # ============================================================
 
 def load_dataset():
@@ -158,8 +160,17 @@ def load_dataset():
         DATASET_PATH
     )
 
+    df["timestamp"] = pd.to_datetime(
+        df["timestamp"]
+    )
+
     print(
         f"Dataset records: {len(df)}"
+    )
+
+    print(
+        f"Unique timestamps: "
+        f"{df['timestamp'].nunique()}"
     )
 
     print(
@@ -175,14 +186,18 @@ def load_dataset():
 
 
 # ============================================================
-# VALIDATE DATA
+# 5. VALIDATE DATA
 # ============================================================
 
 def validate_dataset(df):
 
     required_columns = (
         FEATURES
-        + [TARGET, "timestamp", "crop_type"]
+        + [
+            TARGET,
+            "timestamp",
+            "crop_type",
+        ]
     )
 
     missing_columns = [
@@ -206,36 +221,177 @@ def validate_dataset(df):
 
 
 # ============================================================
-# CHRONOLOGICAL SPLIT
+# 6. TIMESTAMP-GROUPED CHRONOLOGICAL SPLIT
 # ============================================================
 
 def chronological_split(df):
+
+    """
+    Split the dataset using unique timestamps.
+
+    This guarantees that all crop scenarios belonging
+    to the same timestamp remain in exactly one split.
+
+    Split:
+        70% unique timestamps -> training
+        15% unique timestamps -> validation
+        15% unique timestamps -> test
+    """
 
     df = df.sort_values(
         "timestamp"
     ).reset_index(drop=True)
 
-    total = len(df)
-
-    train_end = int(
-        total * 0.70
+    unique_timestamps = (
+        df["timestamp"]
+        .drop_duplicates()
+        .sort_values()
+        .reset_index(drop=True)
     )
 
-    validation_end = int(
-        total * 0.85
+    total_timestamps = len(
+        unique_timestamps
     )
 
-    train_df = df.iloc[
-        :train_end
+    if total_timestamps < 3:
+
+        raise ValueError(
+            "Not enough unique timestamps "
+            "for timestamp-grouped splitting."
+        )
+
+    train_timestamp_end = int(
+        total_timestamps * 0.70
+    )
+
+    validation_timestamp_end = int(
+        total_timestamps * 0.85
+    )
+
+    # Ensure every split receives at least one timestamp.
+    train_timestamp_end = max(
+        1,
+        min(
+            train_timestamp_end,
+            total_timestamps - 2,
+        ),
+    )
+
+    validation_timestamp_end = max(
+        train_timestamp_end + 1,
+        min(
+            validation_timestamp_end,
+            total_timestamps - 1,
+        ),
+    )
+
+    train_timestamps = set(
+        unique_timestamps.iloc[
+            :train_timestamp_end
+        ]
+    )
+
+    validation_timestamps = set(
+        unique_timestamps.iloc[
+            train_timestamp_end:
+            validation_timestamp_end
+        ]
+    )
+
+    test_timestamps = set(
+        unique_timestamps.iloc[
+            validation_timestamp_end:
+        ]
+    )
+
+    train_df = df[
+        df["timestamp"].isin(
+            train_timestamps
+        )
     ].copy()
 
-    validation_df = df.iloc[
-        train_end:validation_end
+    validation_df = df[
+        df["timestamp"].isin(
+            validation_timestamps
+        )
     ].copy()
 
-    test_df = df.iloc[
-        validation_end:
+    test_df = df[
+        df["timestamp"].isin(
+            test_timestamps
+        )
     ].copy()
+
+    # --------------------------------------------------------
+    # Safety checks
+    # --------------------------------------------------------
+
+    train_overlap = (
+        train_timestamps
+        & validation_timestamps
+    )
+
+    train_test_overlap = (
+        train_timestamps
+        & test_timestamps
+    )
+
+    validation_test_overlap = (
+        validation_timestamps
+        & test_timestamps
+    )
+
+    if (
+        train_overlap
+        or train_test_overlap
+        or validation_test_overlap
+    ):
+
+        raise RuntimeError(
+            "Timestamp overlap detected between "
+            "training, validation and test sets."
+        )
+
+    print("\nTimestamp-grouped split:")
+
+    print(
+        f"Total unique timestamps: "
+        f"{total_timestamps}"
+    )
+
+    print(
+        f"Training timestamps: "
+        f"{len(train_timestamps)}"
+    )
+
+    print(
+        f"Validation timestamps: "
+        f"{len(validation_timestamps)}"
+    )
+
+    print(
+        f"Test timestamps: "
+        f"{len(test_timestamps)}"
+    )
+
+    print(
+        f"Training records: "
+        f"{len(train_df)}"
+    )
+
+    print(
+        f"Validation records: "
+        f"{len(validation_df)}"
+    )
+
+    print(
+        f"Test records: "
+        f"{len(test_df)}"
+    )
+
+    print(
+        "\nTimestamp overlap check: PASS"
+    )
 
     return (
         train_df,
@@ -245,7 +401,7 @@ def chronological_split(df):
 
 
 # ============================================================
-# RANDOM FOREST CONFIGURATIONS
+# 7. RANDOM FOREST CONFIGURATIONS
 # ============================================================
 
 RANDOM_FOREST_CONFIGS = [
@@ -278,7 +434,7 @@ RANDOM_FOREST_CONFIGS = [
 
 
 # ============================================================
-# GRADIENT BOOSTING CONFIGURATIONS
+# 8. GRADIENT BOOSTING CONFIGURATIONS
 # ============================================================
 
 GRADIENT_BOOSTING_CONFIGS = [
@@ -311,7 +467,7 @@ GRADIENT_BOOSTING_CONFIGS = [
 
 
 # ============================================================
-# TUNE RANDOM FOREST
+# 9. TUNE RANDOM FOREST
 # ============================================================
 
 def tune_random_forest(
@@ -377,7 +533,7 @@ def tune_random_forest(
         )
 
         print(
-            f"Validation R²: "
+            f"Validation R2: "
             f"{metrics['R2']:.4f}"
         )
 
@@ -419,7 +575,7 @@ def tune_random_forest(
 
 
 # ============================================================
-# TUNE GRADIENT BOOSTING
+# 10. TUNE GRADIENT BOOSTING
 # ============================================================
 
 def tune_gradient_boosting(
@@ -484,7 +640,7 @@ def tune_gradient_boosting(
         )
 
         print(
-            f"Validation R²: "
+            f"Validation R2: "
             f"{metrics['R2']:.4f}"
         )
 
@@ -526,7 +682,7 @@ def tune_gradient_boosting(
 
 
 # ============================================================
-# MAIN
+# 11. MAIN
 # ============================================================
 
 def main():
@@ -616,6 +772,7 @@ def main():
         final_model = best_rf_model
         final_model_name = "Random Forest"
         final_config = best_rf_config
+
         final_validation_metrics = (
             best_rf_validation
         )
@@ -625,6 +782,7 @@ def main():
         final_model = best_gb_model
         final_model_name = "Gradient Boosting"
         final_config = best_gb_config
+
         final_validation_metrics = (
             best_gb_validation
         )
@@ -667,7 +825,7 @@ def main():
     )
 
     print(
-        f"R²   : "
+        f"R2   : "
         f"{final_test_metrics['R2']:.4f}"
     )
 
@@ -752,7 +910,7 @@ def main():
             f"{final_model_name} Multi-Crop"
         ),
 
-        "model_version": "2.0",
+        "model_version": "2.1",
 
         "model_type": type(
             final_model
@@ -764,6 +922,16 @@ def main():
 
         "target": TARGET,
 
+        "split_strategy": (
+            "Timestamp-grouped chronological "
+            "70/15/15 split"
+        ),
+
+        "timestamp_leakage_check": (
+            "PASS - no timestamp overlap "
+            "between train, validation and test"
+        ),
+
         "crop_count": int(
             df["crop_type"].nunique()
         ),
@@ -772,6 +940,22 @@ def main():
             df["crop_type"]
             .unique()
             .tolist()
+        ),
+
+        "unique_timestamps": int(
+            df["timestamp"].nunique()
+        ),
+
+        "training_timestamps": int(
+            train_df["timestamp"].nunique()
+        ),
+
+        "validation_timestamps": int(
+            validation_df["timestamp"].nunique()
+        ),
+
+        "test_timestamps": int(
+            test_df["timestamp"].nunique()
         ),
 
         "feature_count": len(FEATURES),
@@ -810,7 +994,9 @@ def main():
             best_gb_validation
         ),
 
-        "status": "Selected final multi-crop model",
+        "status": (
+            "Selected final multi-crop model"
+        ),
 
         "target_note": (
             "water_quantity_liters is a "
@@ -866,7 +1052,7 @@ def main():
     )
 
     print(
-        f"\n🏆 Selected: "
+        f"\nSelected: "
         f"{final_model_name}"
     )
 

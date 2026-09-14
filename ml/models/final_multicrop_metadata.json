@@ -1,9 +1,11 @@
 {
     "model_name": "Random Forest Multi-Crop",
-    "model_version": "2.0",
+    "model_version": "2.1",
     "model_type": "RandomForestRegressor",
     "dataset": "ml_ready_dataset_multicrop.csv",
     "target": "water_quantity_liters",
+    "split_strategy": "Timestamp-grouped chronological 70/15/15 split",
+    "timestamp_leakage_check": "PASS - no timestamp overlap between train, validation and test",
     "crop_count": 22,
     "crop_types": [
         "apple",
@@ -29,10 +31,14 @@
         "rice",
         "watermelon"
     ],
+    "unique_timestamps": 2202,
+    "training_timestamps": 1541,
+    "validation_timestamps": 330,
+    "test_timestamps": 331,
     "feature_count": 24,
-    "training_records": 33910,
-    "validation_records": 7267,
-    "test_records": 7267,
+    "training_records": 33902,
+    "validation_records": 7260,
+    "test_records": 7282,
     "selected_model": "Random Forest",
     "selected_hyperparameters": {
         "n_estimators": 150,
@@ -40,24 +46,24 @@
         "min_samples_split": 2
     },
     "validation_metrics": {
-        "MAE": 0.024208063850306598,
-        "RMSE": 0.44136071918159364,
-        "R2": 0.9982676072559501
+        "MAE": 0.024231404958702206,
+        "RMSE": 0.44157344512325053,
+        "R2": 0.9982696870013017
     },
     "test_metrics": {
-        "MAE": 2.8123001840236523e-14,
-        "RMSE": 4.329192867198195e-14,
+        "MAE": 2.8027017674547156e-14,
+        "RMSE": 4.2945526319239784e-14,
         "R2": 1.0
     },
     "random_forest_best_validation": {
-        "MAE": 0.024208063850306598,
-        "RMSE": 0.44136071918159364,
-        "R2": 0.9982676072559501
+        "MAE": 0.024231404958702206,
+        "RMSE": 0.44157344512325053,
+        "R2": 0.9982696870013017
     },
     "gradient_boosting_best_validation": {
-        "MAE": 0.04419521511421592,
-        "RMSE": 0.4422322768217687,
-        "R2": 0.9982607585680138
+        "MAE": 0.04649621330465378,
+        "RMSE": 0.442547009666852,
+        "R2": 0.9982620487320927
     },
     "status": "Selected final multi-crop model",
     "target_note": "water_quantity_liters is a rule-generated/synthetic target derived from sensor, weather, crop reference and growth-stage conditions. It is not measured irrigation data."
