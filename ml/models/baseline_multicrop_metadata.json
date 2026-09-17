@@ -1,0 +1,49 @@
+{
+    "model_name": "Mean Baseline Multi-Crop",
+    "model_version": "2.0",
+    "model_type": "DummyRegressor",
+    "dataset": "ml_ready_dataset_multicrop.csv",
+    "target": "water_quantity_liters",
+    "strategy": "mean",
+    "crop_count": 22,
+    "crop_types": [
+        "apple",
+        "banana",
+        "blackgram",
+        "chickpea",
+        "coconut",
+        "coffee",
+        "cotton",
+        "grapes",
+        "jute",
+        "kidneybeans",
+        "lentil",
+        "maize",
+        "mango",
+        "mothbeans",
+        "mungbean",
+        "muskmelon",
+        "orange",
+        "papaya",
+        "pigeonpeas",
+        "pomegranate",
+        "rice",
+        "watermelon"
+    ],
+    "training_records": 33910,
+    "validation_records": 7267,
+    "test_records": 7267,
+    "training_mean_water_quantity_liters": 11.824753759952817,
+    "validation_metrics": {
+        "MAE": 9.220316172570389,
+        "RMSE": 10.622687386924566,
+        "R2": -0.0035240859689349424
+    },
+    "test_metrics": {
+        "MAE": 9.99766329428099,
+        "RMSE": 11.42254447115853,
+        "R2": -0.007633795475465499
+    },
+    "status": "Baseline model trained",
+    "target_note": "water_quantity_liters is a rule-generated/synthetic target derived from sensor, weather, crop reference and growth-stage conditions. It is not measured irrigation data."
+}

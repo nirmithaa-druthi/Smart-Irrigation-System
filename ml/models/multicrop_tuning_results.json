@@ -1,0 +1,90 @@
+[
+    {
+        "model": "Random Forest",
+        "config": {
+            "n_estimators": 100,
+            "max_depth": 5,
+            "min_samples_split": 2
+        },
+        "MAE": 0.2227085817763317,
+        "RMSE": 0.5952627785127153,
+        "R2": 0.9968556112919291
+    },
+    {
+        "model": "Random Forest",
+        "config": {
+            "n_estimators": 150,
+            "max_depth": 10,
+            "min_samples_split": 2
+        },
+        "MAE": 0.024231404958702095,
+        "RMSE": 0.44157344512325053,
+        "R2": 0.9982696870013017
+    },
+    {
+        "model": "Random Forest",
+        "config": {
+            "n_estimators": 200,
+            "max_depth": 15,
+            "min_samples_split": 2
+        },
+        "MAE": 0.02423140495870663,
+        "RMSE": 0.4415734451232505,
+        "R2": 0.9982696870013017
+    },
+    {
+        "model": "Random Forest",
+        "config": {
+            "n_estimators": 200,
+            "max_depth": null,
+            "min_samples_split": 2
+        },
+        "MAE": 0.02423140495870673,
+        "RMSE": 0.4415734451232504,
+        "R2": 0.9982696870013017
+    },
+    {
+        "model": "Gradient Boosting",
+        "config": {
+            "n_estimators": 100,
+            "learning_rate": 0.1,
+            "max_depth": 3
+        },
+        "MAE": 0.06287599294222272,
+        "RMSE": 0.4443717155263329,
+        "R2": 0.9982476873755493
+    },
+    {
+        "model": "Gradient Boosting",
+        "config": {
+            "n_estimators": 150,
+            "learning_rate": 0.1,
+            "max_depth": 3
+        },
+        "MAE": 0.04649621330465378,
+        "RMSE": 0.442547009666852,
+        "R2": 0.9982620487320927
+    },
+    {
+        "model": "Gradient Boosting",
+        "config": {
+            "n_estimators": 150,
+            "learning_rate": 0.05,
+            "max_depth": 3
+        },
+        "MAE": 0.09258911663664254,
+        "RMSE": 0.450134590012056,
+        "R2": 0.998201942616877
+    },
+    {
+        "model": "Gradient Boosting",
+        "config": {
+            "n_estimators": 200,
+            "learning_rate": 0.1,
+            "max_depth": 2
+        },
+        "MAE": 0.13843645445987174,
+        "RMSE": 0.4624353556525582,
+        "R2": 0.9981023293737862
+    }
+]
