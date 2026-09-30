@@ -8,11 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 API_KEY = os.getenv("OPENWEATHER_API_KEY")
-
 DB_PASSWORD = os.getenv("POSTGRES_PASSWORD")
-
-CITY = "Bengaluru"
-FIELD_ID = "FIELD001"
 
 CURRENT_WEATHER_URL = "https://api.openweathermap.org/data/2.5/weather"
 FORECAST_URL = "https://api.openweathermap.org/data/2.5/forecast"
@@ -67,6 +63,33 @@ def get_weather_forecast(city):
 
 
 # ---------------------------------------------------------
+# GET ALL REGISTERED FIELDS
+# ---------------------------------------------------------
+
+def get_registered_fields():
+    connection = get_db_connection()
+
+    try:
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT
+                field_id,
+                location
+            FROM field
+            ORDER BY field_id
+            """
+        )
+
+        return cursor.fetchall()
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
+# ---------------------------------------------------------
 # STORE WEATHER RECORD
 # ---------------------------------------------------------
 
@@ -88,10 +111,13 @@ def store_weather_record(
             """
             SELECT 1
             FROM weather_data
-            WHERE field_id=%s
-            AND timestamp=%s
+            WHERE field_id = %s
+            AND timestamp = %s
             """,
-            (field_id, timestamp),
+            (
+                field_id,
+                timestamp,
+            ),
         )
 
         if cursor.fetchone():
@@ -108,7 +134,15 @@ def store_weather_record(
                 rainfall,
                 rain_probability
             )
-            VALUES(%s,%s,%s,%s,%s,%s,%s)
+            VALUES(
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s,
+                %s
+            )
             """,
             (
                 field_id,
@@ -131,32 +165,54 @@ def store_weather_record(
 
 
 # ---------------------------------------------------------
-# MAIN PROGRAM
+# UPDATE WEATHER FOR ONE FIELD
 # ---------------------------------------------------------
 
-def update_weather_database():
+def update_field_weather(
+    field_id,
+    location,
+):
 
-    current = get_current_weather(CITY)
-    forecast = get_weather_forecast(CITY)
-
+    print("\n" + "=" * 60)
+    print(
+        f"WEATHER UPDATE — {field_id}"
+    )
     print("=" * 60)
-    print("SMART IRRIGATION WEATHER UPDATE")
-    print("=" * 60)
 
-    print("City:", current["name"])
+    print("Field location:", location)
+
+    # -----------------------------------------------------
+    # CURRENT WEATHER
+    # -----------------------------------------------------
+
+    current = get_current_weather(location)
+
+    actual_location = current["name"]
 
     current_timestamp = datetime.fromtimestamp(
         current["dt"],
         timezone.utc,
-    ).replace(tzinfo=None)
+    ).replace(
+        tzinfo=None
+    )
 
-    current_temperature = current["main"]["temp"]
-    current_humidity = current["main"]["humidity"]
-    current_rainfall = current.get("rain", {}).get("1h", 0)
+    current_temperature = (
+        current["main"]["temp"]
+    )
+
+    current_humidity = (
+        current["main"]["humidity"]
+    )
+
+    current_rainfall = (
+        current
+        .get("rain", {})
+        .get("1h", 0)
+    )
 
     stored = store_weather_record(
-        FIELD_ID,
-        current["name"],
+        field_id,
+        actual_location,
         current_timestamp,
         current_temperature,
         current_humidity,
@@ -164,9 +220,22 @@ def update_weather_database():
         0,
     )
 
-    print("Current weather stored:", stored)
+    print(
+        "Current weather stored:",
+        stored,
+    )
 
-    print("\nSaving complete 5-day forecast...\n")
+    # -----------------------------------------------------
+    # FORECAST
+    # -----------------------------------------------------
+
+    forecast = get_weather_forecast(
+        location
+    )
+
+    print(
+        "\nSaving complete 5-day forecast..."
+    )
 
     stored_count = 0
     skipped_count = 0
@@ -178,16 +247,27 @@ def update_weather_database():
             "%Y-%m-%d %H:%M:%S",
         )
 
-        temperature = item["main"]["temp"]
-        humidity = item["main"]["humidity"]
+        temperature = (
+            item["main"]["temp"]
+        )
 
-        rainfall = item.get("rain", {}).get("3h", 0)
+        humidity = (
+            item["main"]["humidity"]
+        )
 
-        rain_probability = item.get("pop", 0) * 100
+        rainfall = (
+            item
+            .get("rain", {})
+            .get("3h", 0)
+        )
+
+        rain_probability = (
+            item.get("pop", 0) * 100
+        )
 
         stored = store_weather_record(
-            FIELD_ID,
-            CITY,
+            field_id,
+            actual_location,
             timestamp,
             temperature,
             humidity,
@@ -214,25 +294,110 @@ def update_weather_database():
             stored,
         )
 
-    print("\n" + "=" * 60)
-    print("WEATHER DATABASE UPDATED")
+    print("\n" + "-" * 60)
+
+    print(
+        f"Field {field_id} completed."
+    )
+
+    print(
+        "Forecast records stored:",
+        stored_count,
+    )
+
+    print(
+        "Duplicate records skipped:",
+        skipped_count,
+    )
+
+    print(
+        "Forecast records checked:",
+        len(forecast["list"]),
+    )
+
+
+# ---------------------------------------------------------
+# UPDATE WEATHER FOR ALL REGISTERED FIELDS
+# ---------------------------------------------------------
+
+def update_weather_database():
+
+    fields = get_registered_fields()
+
+    if not fields:
+        print(
+            "No registered fields found."
+        )
+        return
+
+    print("=" * 60)
+    print("SMART IRRIGATION WEATHER UPDATE")
     print("=" * 60)
 
-    print("Forecast records stored :", stored_count)
-    print("Duplicate records skipped:", skipped_count)
-    print("Forecast records checked :", len(forecast["list"]))
+    print(
+        "Registered fields:",
+        len(fields),
+    )
 
+    for field_id, location in fields:
+
+        try:
+
+            update_field_weather(
+                field_id,
+                location,
+            )
+
+        except requests.exceptions.RequestException as error:
+
+            print(
+                f"\nWeather API error for "
+                f"{field_id} ({location}):"
+            )
+
+            print(error)
+
+        except Exception as error:
+
+            print(
+                f"\nError updating "
+                f"{field_id} ({location}):"
+            )
+
+            print(error)
+
+    print("\n" + "=" * 60)
+    print("ALL FIELD WEATHER UPDATES COMPLETED")
+    print("=" * 60)
+
+
+# ---------------------------------------------------------
+# MAIN
+# ---------------------------------------------------------
 
 if __name__ == "__main__":
 
     try:
+
         update_weather_database()
 
     except requests.exceptions.RequestException as error:
-        print("Weather API Error:", error)
+
+        print(
+            "Weather API Error:",
+            error,
+        )
 
     except psycopg2.Error as error:
-        print("Database Error:", error)
+
+        print(
+            "Database Error:",
+            error,
+        )
 
     except Exception as error:
-        print("Unexpected Error:", error)
+
+        print(
+            "Unexpected Error:",
+            error,
+        )
