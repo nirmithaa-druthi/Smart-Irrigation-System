@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from datetime import datetime
 import psycopg2
@@ -8,6 +9,15 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = FastAPI()
+
+# Allow the Next.js Farmer PWA to communicate with this API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 class SensorReading(BaseModel):
@@ -118,6 +128,76 @@ def add_sensor_data(reading: SensorReading):
         if conn:
             conn.rollback()
 
+        print("UNEXPECTED ERROR:", error)
+
+        raise HTTPException(
+            status_code=500,
+            detail="Unexpected error occurred."
+        )
+
+    finally:
+        if cursor:
+            cursor.close()
+
+        if conn:
+            conn.close()
+
+
+@app.get("/sensor-data/latest/{field_id}")
+def get_latest_sensor_data(field_id: str):
+
+    conn = None
+    cursor = None
+
+    try:
+        conn = psycopg2.connect(
+            host="localhost",
+            database="smart_irrigation",
+            user="postgres",
+            password=os.getenv("POSTGRES_PASSWORD"),
+            port="5432"
+        )
+
+        cursor = conn.cursor()
+
+        cursor.execute(
+            """
+            SELECT sensor_id, field_id, timestamp, soil_moisture
+            FROM sensor_data
+            WHERE field_id = %s
+            ORDER BY timestamp DESC
+            LIMIT 1
+            """,
+            (field_id,)
+        )
+
+        row = cursor.fetchone()
+
+        if row is None:
+            raise HTTPException(
+                status_code=404,
+                detail="No sensor data found for this field."
+            )
+
+        return {
+            "sensor_id": row[0],
+            "field_id": row[1],
+            "timestamp": row[2],
+            "soil_moisture": row[3]
+        }
+
+    except HTTPException:
+        raise
+
+    except psycopg2.Error as error:
+        print("DATABASE ERROR:", error)
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(error)
+        )
+
+    except Exception as error:
         print("UNEXPECTED ERROR:", error)
 
         raise HTTPException(
